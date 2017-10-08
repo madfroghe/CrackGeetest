@@ -23,6 +23,8 @@ class WebCracker(object):
             # TODO
             pass
         self.wait = WebDriverWait(self.driver, timeout=timeout, poll_frequency=freq)
+        self.driver.set_page_load_timeout(20)
+        self.driver.set_script_timeout(10)
 
     def run_crack(self, word, url='http://www.gsxt.gov.cn/index.html'):
         self.driver.get(url)
@@ -32,6 +34,7 @@ class WebCracker(object):
         time.sleep(0.1)
         self.driver.find_element_by_id('btn_query').click()
         # get image
+        self.wait_appear(By.CLASS_NAME, 'gt_cut_fullbg_slice')
         image1 = self.get_image("//div[@class='gt_cut_fullbg_slice']")
         image2 = self.get_image("//div[@class='gt_cut_bg_slice']")
         # get first different place
@@ -39,14 +42,23 @@ class WebCracker(object):
         print pos
         # simulate
         self.simulate(pos)
-        self.driver.close()
+        self.wait_appear(By.CLASS_NAME, 'search-result')
+        print self.driver.current_url
+        # self.driver.close()
 
     def simulate(self, pos):
         # select the ball
         element = self.driver.find_element_by_xpath("//div[@class='gt_slider_knob gt_show']")
         ActionChains(self.driver).click_and_hold(on_element=element).perform()
-        # TODO
-        ActionChains(self.driver).move_by_offset(pos, 0).perform()
+
+        diff = [1, 1, -1, -1, -1, 1, -1]
+        pos += random.choice(diff)
+        while pos > 0:
+            mul = random.random()
+            off = random.randint(0, 4)
+            ActionChains(self.driver).move_by_offset(off, 0).perform()
+            time.sleep(mul * 0.05)
+            pos -= off
 
         time.sleep(0.11)
         ActionChains(self.driver).release(on_element=element).perform()
